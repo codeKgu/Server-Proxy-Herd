@@ -1,6 +1,6 @@
 import aiohttp
 import asyncio
-
+import time
 url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=+34.068930,-118.445127&radius=3000&key=AIzaSyC-pALbeZ1iks-6xlsC4EQMa72kiOzf-No"
 
 
@@ -21,3 +21,4 @@ if __name__ == '__main__':
 
     loop = asyncio.get_event_loop()
     loop.run_until_complete(main(url))
+    print(time.time())
