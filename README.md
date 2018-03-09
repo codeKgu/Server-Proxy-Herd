@@ -1,7 +1,8 @@
 # Server-Proxy-Herd using Python with [asyncio](https://docs.python.org/3/library/asyncio.html) and [aiohttp](https://aiohttp.readthedocs.io/en/stable/)
 ## Project for CS131 Winter 2018
 Spec: https://web.cs.ucla.edu/classes/winter18/cs131/hw/pr.html
-Requirements: see requirements.txt
+
+Python dependencies: see requirements.txt
 ### To run a server
 ```
 python server.py [Server Name]
