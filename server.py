@@ -13,11 +13,11 @@ def time_diff(client_time):
     if server_time - float(client_time) >= 0:
         return "+{:.9f}".format(server_time - float(client_time))
     else:
-        return "-{:.9f}".format(server_time - float(client_time))
+        return "{:.9f}".format(server_time - float(client_time))
 
 
 def log(logger, message, entry='INPUT'):
-    logger.info("{}: {}".format(input, message.rstrip()))
+    logger.info("{}: {}".format(entry, message.rstrip()))
 
 
 async def request_gmaps(url_request):
@@ -51,22 +51,24 @@ class server:
 
     async def flood_server(self, server, message):
         try:
-            print("Connected to {}".format(server))
             reader, writer = await asyncio.open_connection('127.0.0.1', SERVER_CONFIG[server][1],
                                                            loop=loop)
+            print("CONNECTED to {}".format(server))
+            log(self._logger, "Connected to {}".format(server), entry="INTERNAL")
+            log(self._logger, message, entry="OUTPUT to {}".format(server))
             writer.write(message.encode())
             writer.close()
         except ConnectionRefusedError:
-            log(self._logger, "Cannot connect to: {}".format(server), entry="INTERNAL")
-            print("Cannot not connect to: {}".format(server))
+            log(self._logger, "CANNOT CONNECT to: {}".format(server), entry="INTERNAL")
+            print("CANNOT CONNECT connect to: {}".format(server))
         return
 
     async def handle_imat(self, pmessage, message):
-        response_message = "AT {} {} {} {} {}\n".format(self._name, time_diff(pmessage.time),
+        response_message = "AT {} {} {} {} {}\n".format(self._name, time_diff(float(pmessage.time)),
                                                         pmessage.id, pmessage.loc, pmessage.time)
         log(self._logger, response_message, entry='OUTPUT')
         if not self.most_recent_client(pmessage, response_message):
-            await self.flood_neighbors("FLOOD {}".format(message))
+            await self.flood_neighbors("FLOOD {}".format(response_message))
         return response_message
 
     async def handle_whatsat(self, pmessage):
@@ -76,7 +78,9 @@ class server:
             request_url = "{}location={},{}&radius={}&key={}".format(REQUEST_URL, self._clients[pmessage.id]["lat"], self._clients[pmessage.id]["long"], 1000 * pmessage.radius, API_KEY)
             response_json = await request_gmaps(request_url)
             response_json['results'] = response_json['results'][:pmessage.num_results]
-            response_str = json.dumps(response_json, indent=3)
+            response_str = "{}\n".format(json.dumps(response_json, indent=3))
+            response_str = [char for char, next_char in zip(response_str[0:-1], response_str[1:]) if not(char == '\n' and next_char == '\n')]
+            response_str = "".join(response_str)
             response_message = "{}\n{}\n\n".format(self._clients[pmessage.id]["string"], response_str)
             log(self._logger, response_message, entry="OUTPUT")
         return response_message
@@ -101,23 +105,26 @@ class server:
         log(self._logger, message)
         parsed_message = ParseMessage(message)
         pmessage_type = parsed_message.check_command()
+        response_msg = "? {}".format(message)
         if pmessage_type == IAMAT and parsed_message.check_iamat():
-            print("RECIEVED {} from {}".format(message, parsed_message.id))
+            print("RECIEVED: {} FROM CLIENT {}".format(message.rstrip(), parsed_message.id))
             response_msg = await self.handle_imat(parsed_message, message)
-            print("SEND: {}".format(response_msg))
+            print("SEND: {}".format(response_msg.rstrip()))
         elif pmessage_type == WHATSAT and parsed_message.check_whatsat():
-            print("RECIEVED {} from {}".format(message, parsed_message.id))
+            print("RECIEVED {} FROM CLIENT {}".format(message.rstrip(), parsed_message.id))
             whatsat_msg = await self.handle_whatsat(parsed_message)
             if whatsat_msg != NONE:
                 response_msg = whatsat_msg
+            else:
+                log(self._logger, response_msg, entry="OUTPUT")
             print("SEND: {}".format(response_msg))
         elif pmessage_type == FLOOD:
-            print("RECIEVED {} from {}".format(message, parsed_message.id))
-            self.most_recent_client(parsed_message, " ".join(message.split()[1:5]))
+            print("RECIEVED {}".format(message.rstrip()))
+            self.most_recent_client(parsed_message, " ".join(message.split()[1:7]))
             await self.flood_neighbors(message)
             response_msg = NONE
         else:
-            response_msg = "? {}".format(message)
+            log(self._logger, response_msg, entry="OUTPUT")
         return response_msg
 
 

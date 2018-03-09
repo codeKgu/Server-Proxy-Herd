@@ -19,9 +19,9 @@ class ParseMessage:
         command = self._message_split[0]
         if command == FLOOD:
             self.message_type = FLOOD
-            self.time = float(self._message_split[4])
-            self.id = self._message_split[2]
-            self.get_long_lat(self._message_split[3])
+            self.time = self._message_split[6]
+            self.id = self._message_split[4]
+            self.get_long_lat(self._message_split[5])
         else:
             if len(self._message_split) != 4:
                 return self.message_type
@@ -47,19 +47,18 @@ class ParseMessage:
                 return False
         self.lat = "".join(latitude)
         self.long = "".join(longitude)
-        return latitude, longitude
+        return True
 
     def check_iso_standard(self):
         iso_message = self._message_split[2]
-        latitude, longitude = self.get_long_lat(iso_message)
-        lat_temp = "".join(latitude[1:]).split('.')
-        long_temp = "".join(longitude[1:]).split('.')
-        if len(lat_temp[0]) not in [2, 4, 6] or len(long_temp[0]) not in[3, 5, 7] or len(lat_temp) != 2 or len(long_temp) != 2:
+        if not self.get_long_lat(iso_message):
             return False
-        for lat, long in zip(lat_temp, long_temp):
-            if not lat.isdigit() or not long.isdigit():
+        lat_temp = self.lat[1:]
+        long_temp = self.long[1:]
+        for lat, log in zip(lat_temp, long_temp):
+            if not (lat.isdigit() or lat == '.') or not (log.isdigit()or log == '.'):
                 return False
-        if int(lat_temp[0]) > 90 or int(long_temp[0]) > 180:
+        if float(lat_temp) > 90 or float(long_temp) > 180:
             return False
         return True
 
@@ -70,7 +69,7 @@ class ParseMessage:
         except (ValueError, OSError) as e:
             return False
         time = self._message_split[3].split('.')
-        if len(time[1]) > 9:
+        if len(time[1]) != 9:
             return False
         return True
 
@@ -79,11 +78,11 @@ class ParseMessage:
             return False
         self.id = self._message_split[1]
         self.loc = self._message_split[2]
-        self.time = float(self._message_split[3])
+        self.time = self._message_split[3]
         return True
 
     def check_whatsat(self):
-        if int(self._message_split[2]) < 0 or int(self._message_split[2]) > 50:
+        if int(self._message_split[2]) <= 0 or int(self._message_split[2]) > 50:
             return False
         elif int(self._message_split[3]) <= 0 or int(self._message_split[3]) > 20:
             return False
