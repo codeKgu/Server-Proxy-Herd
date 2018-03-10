@@ -54,10 +54,12 @@ class server:
             reader, writer = await asyncio.open_connection('127.0.0.1', SERVER_CONFIG[server][1],
                                                            loop=loop)
             print("CONNECTED to {}".format(server))
-            log(self._logger, "Connected to {}".format(server), entry="INTERNAL")
+            log(self._logger, "CONNECTED to {}".format(server), entry="INTERNAL")
             log(self._logger, message, entry="OUTPUT to {}".format(server))
             writer.write(message.encode())
             writer.close()
+            print("DISCONNECTED with {}".format(server))
+            log(self._logger, "DISCONNECTED with {}".format(server), entry="INTERNAL")
         except ConnectionRefusedError:
             log(self._logger, "CANNOT CONNECT to: {}".format(server), entry="INTERNAL")
             print("CANNOT CONNECT connect to: {}".format(server))
@@ -90,20 +92,30 @@ class server:
 
     async def handle_maintained_client(self, reader, writer):
         try:
-            data = await reader.readline()
-            response = await self.handle_message(data, reader, writer)
-            if response != NONE:
-                writer.write(response.encode())
-                await writer.drain()
-                await self.handle_maintained_client(reader, writer)
-            writer.close()
+            data = await reader.readuntil('\n')
+            messages = data.decode()
+            message_arr = messages.splitlines(keepends=True)
+            print(message_arr)
+            for message in message_arr:
+                print(message)
+                response = await self.handle_message(message)
+                # print(response)
+                # response is only NONE for communication between servers
+                if response != NONE:
+                    writer.write(response.encode())
+                    await writer.drain()
+                else:
+                    writer.close()
+            await self.handle_maintained_client(reader, writer)
+
         except ConnectionResetError:
+            # if cannot connect to server close
             writer.close()
 
-    async def handle_message(self, data, reader, writer):
-        message = data.decode()
+    async def handle_message(self, message):
         log(self._logger, message)
-        parsed_message = ParseMessage(message)
+        striped_message = message.strip()
+        parsed_message = ParseMessage(striped_message)
         pmessage_type = parsed_message.check_command()
         response_msg = "? {}".format(message)
         if pmessage_type == IAMAT and parsed_message.check_iamat():
@@ -124,6 +136,7 @@ class server:
             await self.flood_neighbors(message)
             response_msg = NONE
         else:
+            print("SEND: {}".format(response_msg))
             log(self._logger, response_msg, entry="OUTPUT")
         return response_msg
 
@@ -154,3 +167,6 @@ if __name__ == '__main__':
     server.close()
     loop.run_until_complete(server.wait_closed())
     loop.close()
+
+
+# event loop runs coroutine, basically runs next on coroutine awaits on stuff until the lowest level yeilds and schedules
