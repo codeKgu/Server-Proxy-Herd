@@ -54,15 +54,15 @@ class server:
             reader, writer = await asyncio.open_connection('127.0.0.1', SERVER_CONFIG[server][1],
                                                            loop=loop)
             print("CONNECTED to {}".format(server))
-            log(self._logger, "CONNECTED to {}".format(server), entry="INTERNAL")
+            log(self._logger, "Connected to {}".format(server), entry="INTERNAL")
             log(self._logger, message, entry="OUTPUT to {}".format(server))
             writer.write(message.encode())
             writer.close()
             print("DISCONNECTED with {}".format(server))
-            log(self._logger, "DISCONNECTED with {}".format(server), entry="INTERNAL")
+            log(self._logger, "Disconnected with {}".format(server), entry="INTERNAL")
         except ConnectionRefusedError:
-            log(self._logger, "CANNOT CONNECT to: {}".format(server), entry="INTERNAL")
-            print("CANNOT CONNECT connect to: {}".format(server))
+            log(self._logger, "Cannot connect to {}".format(server), entry="INTERNAL")
+            print("CANNOT CONNECT TO: {}".format(server))
         return
 
     async def handle_imat(self, pmessage, message):
@@ -75,7 +75,7 @@ class server:
 
     async def handle_whatsat(self, pmessage):
         if pmessage.id not in self._clients:
-            response_message = NONE
+            response_message = "NO ID"
         else:
             request_url = "{}location={},{}&radius={}&key={}".format(REQUEST_URL, self._clients[pmessage.id]["lat"], self._clients[pmessage.id]["long"], 1000 * pmessage.radius, API_KEY)
             response_json = await request_gmaps(request_url)
@@ -92,24 +92,24 @@ class server:
 
     async def handle_maintained_client(self, reader, writer):
         try:
-            data = await reader.readuntil('\n')
-            messages = data.decode()
-            message_arr = messages.splitlines(keepends=True)
-            print(message_arr)
-            for message in message_arr:
-                print(message)
-                response = await self.handle_message(message)
-                # print(response)
-                # response is only NONE for communication between servers
-                if response != NONE:
-                    writer.write(response.encode())
-                    await writer.drain()
-                else:
-                    writer.close()
-            await self.handle_maintained_client(reader, writer)
-
-        except ConnectionResetError:
-            # if cannot connect to server close
+            data = await reader.readuntil()
+        except asyncio.IncompleteReadError:
+            data = await reader.readline()
+            print("CLIENT EOF REACHED, CLOSED CONNECTION")
+            writer.close()
+            return
+        message = data.decode()
+        response = await self.handle_message(message)
+        # response is only NONE for communication between servers
+        if response != NONE:
+            try:
+                writer.write(response.encode())
+                await writer.drain()
+                await self.handle_maintained_client(reader, writer)
+            except ConnectionResetError:
+                print("CLIENT DISCONNECTED WHILE WRITING")
+                writer.close()
+        else:
             writer.close()
 
     async def handle_message(self, message):
@@ -119,24 +119,25 @@ class server:
         pmessage_type = parsed_message.check_command()
         response_msg = "? {}".format(message)
         if pmessage_type == IAMAT and parsed_message.check_iamat():
-            print("RECIEVED: {} FROM CLIENT {}".format(message.rstrip(), parsed_message.id))
+            print("RECIEVED: {}".format(message.rstrip()))
             response_msg = await self.handle_imat(parsed_message, message)
             print("SEND: {}".format(response_msg.rstrip()))
         elif pmessage_type == WHATSAT and parsed_message.check_whatsat():
-            print("RECIEVED {} FROM CLIENT {}".format(message.rstrip(), parsed_message.id))
+            print("RECIEVED {}".format(message.rstrip()))
             whatsat_msg = await self.handle_whatsat(parsed_message)
-            if whatsat_msg != NONE:
+            if whatsat_msg != "NO ID":
                 response_msg = whatsat_msg
             else:
                 log(self._logger, response_msg, entry="OUTPUT")
-            print("SEND: {}".format(response_msg))
+            print("SEND: {}".format(response_msg.rstrip()))
         elif pmessage_type == FLOOD:
             print("RECIEVED {}".format(message.rstrip()))
             self.most_recent_client(parsed_message, " ".join(message.split()[1:7]))
             await self.flood_neighbors(message)
             response_msg = NONE
         else:
-            print("SEND: {}".format(response_msg))
+            print("RECIEVED: {}".format(message.rstrip()))
+            print("SEND: {}".format(response_msg.rstrip()))
             log(self._logger, response_msg, entry="OUTPUT")
         return response_msg
 
