@@ -26,7 +26,7 @@ async def request_gmaps(url_request):
             return await resp.json()
 
 
-class server:
+class Server:
     def __init__(self, server_name, server_config):
         self._name = server_name
         self._neighbors = dict.fromkeys(SERVER_CONFIG[server_name][0])
@@ -94,7 +94,6 @@ class server:
         try:
             data = await reader.readuntil()
         except asyncio.IncompleteReadError:
-            data = await reader.readline()
             print("CLIENT EOF REACHED, CLOSED CONNECTION")
             writer.close()
             return
@@ -151,7 +150,7 @@ if __name__ == '__main__':
     if not server_name in SERVER_IDS:
         print("Invalid server id. Server ids: Goloman, Hands, Holiday, Welsh, Wilkes")
 
-    server = server(server_name, SERVER_CONFIG[server_name])
+    server = Server(server_name, SERVER_CONFIG[server_name])
     loop = asyncio.get_event_loop()
     coro = asyncio.start_server(server.handle_client, '127.0.0.1', SERVER_CONFIG[server_name][1], loop=loop)
     server = loop.run_until_complete(coro)
