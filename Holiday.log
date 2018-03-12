@@ -1,0 +1,46 @@
+INPUT:     IAMAT ken +34.065445-118.444732  1520737211.410398245
+OUTPUT: AT Holiday +0.002477884 ken +34.065445-118.444732 1520737211.410398245
+INTERNAL: Cannot connect to Goloman
+INTERNAL: Cannot connect to Welsh
+INTERNAL: Cannot connect to Wilkes
+INPUT: asd
+OUTPUT: ? asd
+INPUT: still connected
+OUTPUT: ? still connected
+INPUT:     IAMAT ken +34.065445-118.444732  1520737256.491132736
+OUTPUT: AT Holiday +0.002006054 ken +34.065445-118.444732 1520737256.491132736
+INTERNAL: Cannot connect to Goloman
+INTERNAL: Cannot connect to Welsh
+INTERNAL: Cannot connect to Wilkes
+INPUT: asd
+OUTPUT: ? asd
+INPUT: still connected
+OUTPUT: ? still connected
+INPUT: 
+OUTPUT: ?
+INPUT: 
+OUTPUT: ?
+INPUT:     IAMAT ken +34.065445-118.444732  1520737312.088053465
+OUTPUT: AT Holiday +0.002005816 ken +34.065445-118.444732 1520737312.088053465
+INTERNAL: Cannot connect to Goloman
+INTERNAL: Cannot connect to Welsh
+INTERNAL: Cannot connect to Wilkes
+INPUT: asd
+OUTPUT: ? asd
+INPUT: still connected
+OUTPUT: ? still connected
+INPUT:     IAMAT ken +34.065445-118.444732  1520739325.034798622
+OUTPUT: AT Holiday +0.002007961 ken +34.065445-118.444732 1520739325.034798622
+INTERNAL: Cannot connect to Goloman
+INTERNAL: Cannot connect to Welsh
+INTERNAL: Cannot connect to Wilkes
+INPUT: asd
+OUTPUT: ? asd
+INPUT: still connected
+OUTPUT: ? still connected
+INPUT: FLOOD AT Goloman +0.003019094 ken +34.065445-118.444732 1520739348.307890177 Goloman
+INTERNAL: Cannot connect to Welsh
+INTERNAL: Cannot connect to Wilkes
+INPUT: FLOOD AT Goloman +0.001971245 ken +34.065445-118.444732 1520754485.374765873 Goloman
+INTERNAL: Cannot connect to Welsh
+INTERNAL: Cannot connect to Wilkes
